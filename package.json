@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "db:aplicar": "node --env-file=.env.local db/aplicar.mjs",
-    "db:probar": "node --env-file=.env.local db/probar.mjs"
+    "db:probar": "node --env-file=.env.local db/probar.mjs",
+    "db:reiniciar": "node --env-file=.env.local db/reiniciar.mjs",
+    "db:sembrar": "node --env-file=.env.local db/sembrar.mjs",
+    "db:comparar": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file=.env.local db/comparar.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
