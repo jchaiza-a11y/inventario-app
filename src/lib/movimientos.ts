@@ -15,12 +15,13 @@ export const TIPOS: TipoMovimiento[] = [
   "PASE A CUSTODIA DEL JEFE INMEDIATO",
 ];
 
-export type EntradaMovimiento = {
+/** Datos comunes de la acta más la lista de bienes que la componen. */
+export type EntradaActa = {
   tipo: TipoMovimiento | "";
-  bien: Bien | null;
+  bienes: Bien[];
   /** Solo para ASIGNACION. */
   nuevoResponsableId: string;
-  /** Destino (ASIGNACION, SALIDA) o ubicación donde queda (REINGRESO). */
+  /** Destino (ASIGNACION, SALIDA) o ubicación donde quedan (REINGRESO). */
   ubicacion: string;
   /** dd/mm/aaaa */
   fecha: string;
@@ -28,11 +29,16 @@ export type EntradaMovimiento = {
   motivo: string;
 };
 
-export type Errores = Partial<Record<"tipo" | "bien" | "responsable" | "ubicacion" | "fecha" | "acta" | "general", string>>;
+export type Errores = Partial<
+  Record<"tipo" | "bienes" | "responsable" | "ubicacion" | "fecha" | "acta", string>
+>;
 
-export type Resultado =
-  | { ok: true; movimiento: Movimiento }
-  | { ok: false; errores: Errores };
+export type ResultadoActa =
+  | { ok: true; movimientos: Movimiento[] }
+  | { ok: false; errores: Errores; porBien: Record<string, string> };
+
+export const claveActa = (acta: string) => acta.trim().toUpperCase();
+const dmy = (iso: string) => iso.split("-").reverse().join("/");
 
 /** dd/mm/aaaa -> yyyy-mm-dd, o null si no es una fecha real. */
 export function fechaAIso(texto: string): string | null {
@@ -57,7 +63,7 @@ export function jefeDe(personas: Persona[], responsableId: string | null): Perso
   return jefeId ? (personas.find((p) => p.id === jefeId) ?? null) : null;
 }
 
-/** Problemas del bien frente al tipo elegido (no dependen de los demás campos). */
+/** Problemas del bien frente al tipo elegido (no dependen de fecha ni acta). */
 export function errorDeTipo(
   tipo: TipoMovimiento | "",
   estado: EstadoCalculado,
@@ -89,83 +95,138 @@ export function errorDeTipo(
   return null;
 }
 
-export function prepararMovimiento(
-  e: EntradaMovimiento,
+/** Error de un bien según tipo y (en asignaciones) nuevo responsable. */
+export function errorDeBien(
+  tipo: TipoMovimiento | "",
+  estado: EstadoCalculado,
+  nuevoResponsableId: string,
+  personas: Persona[],
+): string | null {
+  const err = errorDeTipo(tipo, estado, personas);
+  if (err) return err;
+  if (tipo === "ASIGNACION" && nuevoResponsableId && nuevoResponsableId === estado.responsableId) {
+    return "Esa persona ya tiene el bien a su cargo.";
+  }
+  return null;
+}
+
+/**
+ * Valida la acta completa (todo o nada) y arma un movimiento por cada bien.
+ * Una acta existente solo admite más bienes si tiene el mismo tipo y fecha.
+ */
+export function prepararActa(
+  e: EntradaActa,
   personas: Persona[],
   movimientos: Movimiento[],
-): Resultado {
+): ResultadoActa {
   const errores: Errores = {};
+  const porBien: Record<string, string> = {};
 
   if (!e.tipo) errores.tipo = "Elige el tipo de movimiento.";
-  if (!e.bien) errores.bien = "Elige el bien.";
+  if (e.bienes.length === 0) errores.bienes = "Agrega al menos un bien a la acta.";
 
-  const estado = e.bien ? calcularEstado(e.bien, movimientos) : null;
-  if (e.tipo && estado) {
-    const err = errorDeTipo(e.tipo, estado, personas);
-    if (err) errores.general = err;
-  }
-
-  // Responsable nuevo según el tipo.
-  let responsableNuevoId: string | null = null;
-  if (e.tipo && estado) {
-    if (e.tipo === "ASIGNACION") {
-      if (!e.nuevoResponsableId) errores.responsable = "Elige el nuevo responsable.";
-      else if (e.nuevoResponsableId === estado.responsableId)
-        errores.responsable = "Esa persona ya tiene el bien a su cargo.";
-      else if (!personas.find((p) => p.id === e.nuevoResponsableId)?.activo)
-        errores.responsable = "Solo se puede asignar a una persona ACTIVA.";
-      responsableNuevoId = e.nuevoResponsableId || null;
-    } else if (e.tipo === "PASE A CUSTODIA DEL JEFE INMEDIATO") {
-      responsableNuevoId = jefeDe(personas, estado.responsableId)?.id ?? null;
-    } else {
-      responsableNuevoId = estado.responsableId; // el responsable no cambia
-    }
+  if (e.tipo === "ASIGNACION") {
+    if (!e.nuevoResponsableId) errores.responsable = "Elige el nuevo responsable.";
+    else if (!personas.find((p) => p.id === e.nuevoResponsableId)?.activo)
+      errores.responsable = "Solo se puede asignar a una persona ACTIVA.";
   }
 
   const ubicacion = e.ubicacion.trim();
   if (e.tipo && e.tipo !== "PASE A CUSTODIA DEL JEFE INMEDIATO" && !ubicacion) {
     errores.ubicacion =
       e.tipo === "REINGRESO DE REPARACION"
-        ? "Indica la ubicación donde queda el bien."
+        ? "Indica la ubicación donde quedan los bienes."
         : "Indica la ubicación de destino.";
   }
 
   const fechaIso = fechaAIso(e.fecha);
-  if (!fechaIso) {
-    errores.fecha = "Escribe una fecha válida con el formato dd/mm/aaaa.";
-  } else if (e.bien) {
-    const ultima = movimientos
-      .filter((m) => m.bienId === e.bien!.id)
-      .map((m) => m.fecha)
-      .sort()
-      .at(-1);
-    if (ultima && fechaIso < ultima) {
-      errores.fecha = `La fecha no puede ser anterior al último movimiento del bien (${ultima.split("-").reverse().join("/")}).`;
+  if (!fechaIso) errores.fecha = "Escribe una fecha válida con el formato dd/mm/aaaa.";
+
+  const acta = e.acta.trim();
+  const clave = claveActa(acta);
+  const deLaActa = clave ? movimientos.filter((m) => claveActa(m.acta) === clave) : [];
+  if (!acta) {
+    errores.acta = "Escribe el N° de acta.";
+  } else if (e.tipo && fechaIso) {
+    const distinta = deLaActa.find((m) => m.tipo !== e.tipo || m.fecha !== fechaIso);
+    if (distinta) {
+      errores.acta = `El N° de acta ${acta} ya existe con ${distinta.tipo} del ${dmy(distinta.fecha)}. Una acta solo admite más bienes del mismo tipo y fecha: usa otro número o corrige el tipo y la fecha.`;
     }
   }
 
-  if (!e.acta.trim()) errores.acta = "Escribe el N° de acta.";
-
-  if (Object.keys(errores).length > 0 || !e.tipo || !e.bien || !estado || !fechaIso) {
-    return { ok: false, errores };
+  // Validación de cada bien con las mismas reglas de siempre.
+  for (const bien of e.bienes) {
+    const estado = calcularEstado(bien, movimientos);
+    let err = errorDeBien(e.tipo, estado, e.nuevoResponsableId, personas);
+    if (!err && deLaActa.some((m) => m.bienId === bien.id)) {
+      err = `Este bien ya está registrado en el ${acta}.`;
+    }
+    if (!err && fechaIso) {
+      const ultima = movimientos
+        .filter((m) => m.bienId === bien.id)
+        .map((m) => m.fecha)
+        .sort()
+        .at(-1);
+      if (ultima && fechaIso < ultima) {
+        err = `La fecha no puede ser anterior al último movimiento del bien (${dmy(ultima)}).`;
+      }
+    }
+    if (err) porBien[bien.id] = err;
   }
 
-  const siguiente = movimientos.reduce((max, m) => (compararIds(m.id, max) > 0 ? m.id : max), "m00");
-  const n = Number(siguiente.replace(/\D/g, "")) + 1;
+  if (Object.keys(errores).length > 0 || Object.keys(porBien).length > 0 || !e.tipo || !fechaIso) {
+    return { ok: false, errores, porBien };
+  }
+
+  const ultimoId = movimientos.reduce((max, m) => (compararIds(m.id, max) > 0 ? m.id : max), "m00");
+  const base = Number(ultimoId.replace(/\D/g, ""));
+  const tipo = e.tipo;
 
   return {
     ok: true,
-    movimiento: {
-      id: `m${String(n).padStart(2, "0")}`,
-      fecha: fechaIso,
-      tipo: e.tipo,
-      bienId: e.bien.id,
-      responsableAnteriorId: estado.responsableId,
-      responsableNuevoId,
-      // La custodia no pide ubicación: el bien se queda donde está.
-      ubicacion: e.tipo === "PASE A CUSTODIA DEL JEFE INMEDIATO" ? estado.ubicacion : ubicacion,
-      acta: e.acta.trim(),
-      ...(e.motivo.trim() ? { motivo: e.motivo.trim() } : {}),
-    },
+    movimientos: e.bienes.map((bien, i) => {
+      const estado = calcularEstado(bien, movimientos);
+      const responsableNuevoId =
+        tipo === "ASIGNACION"
+          ? e.nuevoResponsableId
+          : tipo === "PASE A CUSTODIA DEL JEFE INMEDIATO"
+            ? (jefeDe(personas, estado.responsableId)?.id ?? null) // se calcula bien por bien
+            : estado.responsableId; // reparación: el responsable no cambia
+      return {
+        id: `m${String(base + i + 1).padStart(2, "0")}`,
+        fecha: fechaIso,
+        tipo,
+        bienId: bien.id,
+        responsableAnteriorId: estado.responsableId,
+        responsableNuevoId,
+        // La custodia no pide ubicación: cada bien se queda donde está.
+        ubicacion: tipo === "PASE A CUSTODIA DEL JEFE INMEDIATO" ? estado.ubicacion : ubicacion,
+        // Si la acta ya existe se conserva su grafía registrada.
+        acta: deLaActa[0]?.acta ?? acta,
+        ...(e.motivo.trim() ? { motivo: e.motivo.trim() } : {}),
+      };
+    }),
   };
+}
+
+export type ActaResumen = {
+  clave: string;
+  acta: string;
+  tipo: TipoMovimiento;
+  fecha: string; // yyyy-mm-dd
+  cantidad: number;
+};
+
+/** Agrupa los movimientos por N° de acta (las más recientes primero). */
+export function resumenActas(movimientos: Movimiento[]): ActaResumen[] {
+  const grupos = new Map<string, ActaResumen>();
+  for (const m of movimientos) {
+    const clave = claveActa(m.acta);
+    const g = grupos.get(clave);
+    if (g) g.cantidad += 1;
+    else grupos.set(clave, { clave, acta: m.acta, tipo: m.tipo, fecha: m.fecha, cantidad: 1 });
+  }
+  return [...grupos.values()].sort(
+    (a, b) => b.fecha.localeCompare(a.fecha) || b.acta.localeCompare(a.acta),
+  );
 }
