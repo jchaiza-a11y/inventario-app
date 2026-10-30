@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CircleCheck, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { CircleCheck, FileText, TriangleAlert } from "lucide-react";
 import { CondicionBadge, SituacionBadge } from "@/components/bienes-badges";
 import { usePatrimonio } from "@/components/patrimonio-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -190,6 +192,16 @@ function DetallePersona({ persona }: { persona: PersonaFila }) {
       </SheetHeader>
 
       <div className="space-y-6 p-5">
+        <Button
+          variant="outline"
+          className="h-10 w-full"
+          render={<Link href={`/personas/${persona.id}/ficha`} />}
+          nativeButton={false}
+        >
+          <FileText className="size-4" />
+          Ver ficha de asignación
+        </Button>
+
         {!persona.activo &&
           (persona.bienes.length > 0 ? (
             <Alert className="border-[#FEC84B] bg-[#FFFAEB] text-[#B54708]">

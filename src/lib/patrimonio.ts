@@ -12,6 +12,7 @@ export type Persona = {
   id: string;
   nombre: string;
   cargo: string;
+  oficina: string;
   jefeId: string | null;
   activo: boolean;
 };

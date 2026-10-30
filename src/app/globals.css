@@ -97,3 +97,16 @@
     @apply font-sans;
   }
 }
+
+/* Impresión: hoja A4 apaisada con márgenes ajustados. */
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+}

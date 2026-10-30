@@ -24,14 +24,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <TooltipProvider>
           <PatrimonioProvider>
             <div className="flex min-h-screen">
-              <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar md:block">
+              <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar md:block print:hidden">
                 <div className="sticky top-0 h-screen">
                   <AppSidebar />
                 </div>
               </aside>
               <div className="flex min-w-0 flex-1 flex-col">
                 <AppHeader />
-                <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6">
+                <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6 print:max-w-none print:p-0">
                   {children}
                 </main>
               </div>

@@ -3,6 +3,7 @@ import type { BienFila } from "@/components/bienes-table";
 import type { PersonaFila } from "@/components/personas-table";
 import {
   calcularEstado,
+  type EstadoConservacion,
   compararIds,
   type Bien,
   type Movimiento,
@@ -104,4 +105,51 @@ export function filasPersonas(
       bienes: [...suyos.filter((b) => !b.custodiaDe), ...suyos.filter((b) => b.custodiaDe)],
     };
   });
+}
+
+export type FilaFicha = {
+  item: number;
+  codigoPatrimonial: string;
+  denominacion: string;
+  marca: string;
+  modelo: string;
+  serie: string;
+  medida: string;
+  color: string;
+  estado: EstadoConservacion;
+  aCargoDesde: string | null; // dd/mm/aaaa, null = S/F
+  /** Nombre del trabajador original si el bien está en custodia. */
+  custodiaDe: string | null;
+};
+
+/** Bienes que tiene hoy a su cargo una persona: propios primero, custodia después. */
+export function filasFicha(
+  personaId: string,
+  bienes: Bien[],
+  movimientos: Movimiento[],
+  personas: Persona[],
+): FilaFicha[] {
+  const suyos = bienes
+    .map((bien) => ({ bien, estado: calcularEstado(bien, movimientos) }))
+    .filter((x) => x.estado.responsableId === personaId)
+    .sort((a, b) => a.bien.codigoPatrimonial.localeCompare(b.bien.codigoPatrimonial));
+
+  const ordenados = [
+    ...suyos.filter((x) => !x.estado.custodiaDeId),
+    ...suyos.filter((x) => x.estado.custodiaDeId),
+  ];
+
+  return ordenados.map(({ bien, estado }, i) => ({
+    item: i + 1,
+    codigoPatrimonial: bien.codigoPatrimonial,
+    denominacion: bien.descripcion,
+    marca: bien.marca,
+    modelo: bien.modelo,
+    serie: bien.serie,
+    medida: bien.medidas,
+    color: bien.color,
+    estado: bien.estado,
+    aCargoDesde: estado.aCargoDesde ? dmy(estado.aCargoDesde) : null,
+    custodiaDe: nombreDe(personas, estado.custodiaDeId),
+  }));
 }

@@ -1,11 +1,13 @@
 import type { Bien, Movimiento, Persona } from "@/lib/patrimonio";
 
+export const entidad = "Entidad de ejemplo";
+
 // Datos ficticios. Jerarquía: Director -> Encargado de Abastecimiento -> Técnico / Auxiliar.
 export const personas: Persona[] = [
-  { id: "p1", nombre: "Carlos Mendoza Rivas", cargo: "Director", jefeId: null, activo: true },
-  { id: "p2", nombre: "Rosa Quispe Huamán", cargo: "Encargada de Abastecimiento", jefeId: "p1", activo: true },
-  { id: "p3", nombre: "Luis Paredes Soto", cargo: "Técnico", jefeId: "p2", activo: false }, // CESADO (renunció 30/09/2025)
-  { id: "p4", nombre: "Ana Torres Vega", cargo: "Auxiliar", jefeId: "p2", activo: true },
+  { id: "p1", nombre: "Carlos Mendoza Rivas", cargo: "Director", oficina: "Dirección General", jefeId: null, activo: true },
+  { id: "p2", nombre: "Rosa Quispe Huamán", cargo: "Encargada de Abastecimiento", oficina: "Oficina de Abastecimiento", jefeId: "p1", activo: true },
+  { id: "p3", nombre: "Luis Paredes Soto", cargo: "Técnico", oficina: "Oficina de Abastecimiento", jefeId: "p2", activo: false }, // CESADO (renunció 30/09/2025)
+  { id: "p4", nombre: "Ana Torres Vega", cargo: "Auxiliar", oficina: "Oficina de Abastecimiento", jefeId: "p2", activo: true },
 ];
 
 const OF_ABAST = "Oficina de Abastecimiento";

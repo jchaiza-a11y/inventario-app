@@ -1,10 +1,11 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { bienes, movimientos as movimientosIniciales, personas } from "@/data/mock";
+import { bienes, entidad, movimientos as movimientosIniciales, personas } from "@/data/mock";
 import type { Bien, Movimiento, Persona } from "@/lib/patrimonio";
 
 type Patrimonio = {
+  entidad: string;
   personas: Persona[];
   bienes: Bien[];
   movimientos: Movimiento[];
@@ -24,7 +25,7 @@ export function PatrimonioProvider({ children }: { children: React.ReactNode }) 
   );
 
   const valor = useMemo(
-    () => ({ personas, bienes, movimientos, agregarMovimiento }),
+    () => ({ entidad, personas, bienes, movimientos, agregarMovimiento }),
     [movimientos, agregarMovimiento],
   );
 
