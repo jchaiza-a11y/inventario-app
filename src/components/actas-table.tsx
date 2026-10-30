@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { usePatrimonio } from "@/components/patrimonio-provider";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -31,6 +33,9 @@ export function ActasTable() {
             <TableHead className="h-10 text-right text-xs font-medium tracking-wide text-muted-foreground uppercase">
               Bienes
             </TableHead>
+            <TableHead className="h-10 text-right text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Acta
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -54,6 +59,16 @@ export function ActasTable() {
                   {a.fecha.split("-").reverse().join("/")}
                 </TableCell>
                 <TableCell className="py-3 text-right text-[13.5px] tabular-nums">{a.cantidad}</TableCell>
+                <TableCell className="py-2 text-right">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={<Link href={`/movimientos/actas/${encodeURIComponent(a.acta)}`} />}
+                    nativeButton={false}
+                  >
+                    Ver acta
+                  </Button>
+                </TableCell>
               </TableRow>
             );
           })}
