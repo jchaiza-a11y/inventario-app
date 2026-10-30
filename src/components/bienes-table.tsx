@@ -21,8 +21,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { BienDetalleSheet, type BienFicha } from "@/components/bien-detalle-sheet";
+import { usePatrimonio } from "@/components/patrimonio-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Situacion } from "@/lib/patrimonio";
+import { filasBienes } from "@/lib/vistas";
 
 export type BienFila = {
   id: string;
@@ -48,7 +50,12 @@ const FILTROS = [
 const normalizar = (t: string) =>
   t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-export function BienesTable({ filas }: { filas: BienFila[] }) {
+export function BienesTable() {
+  const { bienes, movimientos, personas } = usePatrimonio();
+  const filas = useMemo(
+    () => filasBienes(bienes, movimientos, personas),
+    [bienes, movimientos, personas],
+  );
   const [busqueda, setBusqueda] = useState("");
   const [situacion, setSituacion] = useState("TODAS");
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null);

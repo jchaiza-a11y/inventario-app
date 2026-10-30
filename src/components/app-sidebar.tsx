@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const items = [
   { href: "/bienes", label: "Bienes", icon: Package, pronto: false },
   { href: "/personas", label: "Personas", icon: Users, pronto: false },
-  { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight, pronto: true },
+  { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight, pronto: false },
 ];
 
 export function AppSidebar() {

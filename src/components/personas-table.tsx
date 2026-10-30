@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { CondicionBadge, SituacionBadge } from "@/components/bienes-badges";
+import { usePatrimonio } from "@/components/patrimonio-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Situacion } from "@/lib/patrimonio";
+import { filasPersonas } from "@/lib/vistas";
 import { cn } from "@/lib/utils";
 
 export type BienPersona = {
@@ -92,7 +94,12 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
   );
 }
 
-export function PersonasTable({ personas }: { personas: PersonaFila[] }) {
+export function PersonasTable() {
+  const { bienes, movimientos, personas: listaPersonas } = usePatrimonio();
+  const personas = useMemo(
+    () => filasPersonas(bienes, movimientos, listaPersonas),
+    [bienes, movimientos, listaPersonas],
+  );
   const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null);
   const [panelAbierto, setPanelAbierto] = useState(false);
 

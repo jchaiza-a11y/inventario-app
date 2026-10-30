@@ -42,6 +42,7 @@ export type Movimiento = {
   responsableNuevoId: string | null;
   ubicacion: string;
   acta: string;
+  motivo?: string;
 };
 
 export type EstadoCalculado = {
@@ -54,13 +55,18 @@ export type EstadoCalculado = {
   custodiaDeId: string | null;
 };
 
+/** Compara ids tipo "m09" < "m10" < "m100" por su parte numérica. */
+export const compararIds = (a: string, b: string) =>
+  a.localeCompare(b, undefined, { numeric: true });
+
 /**
  * Calcula el estado actual de un bien a partir de sus movimientos.
  * Rige el último movimiento; sin movimientos rige el responsable inicial.
  * - "A su cargo desde": fecha del último movimiento en que el responsable
  *   recibió el bien (asignación o pase a custodia); reparación no la cambia.
- * - Custodia: la fija el pase a custodia, sobrevive a reparación y
- *   desaparece con una asignación.
+ * - Custodia: la fija el pase a custodia (a nombre del trabajador original),
+ *   se conserva en nuevos pases y en reparaciones, y desaparece con una
+ *   asignación.
  */
 export function calcularEstado(
   bien: Bien,
@@ -68,7 +74,7 @@ export function calcularEstado(
 ): EstadoCalculado {
   const propios = movimientos
     .filter((m) => m.bienId === bien.id)
-    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.id.localeCompare(b.id));
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || compararIds(a.id, b.id));
 
   let responsableId = bien.responsableInicialId;
   let ubicacion = bien.ubicacionInicial;
@@ -88,7 +94,8 @@ export function calcularEstado(
         break;
       case "PASE A CUSTODIA DEL JEFE INMEDIATO":
         aCargoDesde = m.fecha;
-        custodiaDeId = m.responsableAnteriorId;
+        // Si ya estaba en custodia se conserva al trabajador original.
+        custodiaDeId = custodiaDeId ?? m.responsableAnteriorId;
         enReparacion = false;
         break;
       case "SALIDA A REPARACION":

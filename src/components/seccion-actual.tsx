@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 const secciones: Record<string, string> = {
   "/bienes": "Bienes",
   "/personas": "Personas",
+  "/movimientos": "Movimientos",
 };
 
 export function SeccionActual() {
