@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Landmark, Package, Users, ArrowLeftRight } from "lucide-react";
+import { Landmark, LayoutDashboard, Package, Users, ArrowLeftRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const items = [
+  { href: "/", label: "Resumen", icon: LayoutDashboard, pronto: false },
   { href: "/bienes", label: "Bienes", icon: Package, pronto: false },
   { href: "/personas", label: "Personas", icon: Users, pronto: false },
   { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight, pronto: false },
@@ -29,7 +30,7 @@ export function AppSidebar() {
 
       <nav className="flex flex-col gap-1 p-3" aria-label="Principal">
         {items.map(({ href, label, icon: Icon, pronto }) => {
-          const activo = pathname.startsWith(href);
+          const activo = href === "/" ? pathname === "/" : pathname.startsWith(href);
           const base =
             "flex h-10 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors";
 

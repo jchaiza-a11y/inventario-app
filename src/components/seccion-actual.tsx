@@ -10,6 +10,7 @@ const secciones: Record<string, string> = {
 
 export function SeccionActual() {
   const pathname = usePathname();
+  if (pathname === "/") return <>Resumen</>;
   const clave = Object.keys(secciones).find((k) => pathname.startsWith(k));
   return <>{clave ? secciones[clave] : "Bienes"}</>;
 }
