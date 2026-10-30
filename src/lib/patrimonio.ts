@@ -17,6 +17,12 @@ export type Persona = {
   activo: boolean;
 };
 
+/** Un tipo de bien del catálogo: código de 8 dígitos y denominación. */
+export type CatalogoItem = {
+  codigo: string;
+  denominacion: string;
+};
+
 export type Bien = {
   id: string;
   /** 12 dígitos: 8 del catálogo + 4 de correlativo. Siempre texto. */
@@ -78,7 +84,8 @@ export function calcularEstado(
     .sort((a, b) => a.fecha.localeCompare(b.fecha) || compararIds(a.id, b.id));
 
   let responsableId = bien.responsableInicialId;
-  let ubicacion = bien.ubicacionInicial;
+  // Un bien registrado sin ubicación inicial ("" = sin dato) se muestra como "Sin ubicación".
+  let ubicacion = bien.ubicacionInicial.trim() || "Sin ubicación";
   let aCargoDesde: string | null = null;
   let custodiaDeId: string | null = null;
   let enReparacion = false;

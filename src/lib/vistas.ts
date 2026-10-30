@@ -1,6 +1,7 @@
 import type { BienFicha } from "@/components/bien-detalle-sheet";
 import type { BienFila } from "@/components/bienes-table";
 import type { PersonaFila } from "@/components/personas-table";
+import { datosVisibles } from "@/lib/bienes";
 import { claveActa } from "@/lib/movimientos";
 import {
   calcularEstado,
@@ -38,11 +39,7 @@ export function filasBienes(
       datos: {
         codigoPatrimonial: b.codigoPatrimonial,
         descripcion: b.descripcion,
-        marca: b.marca,
-        modelo: b.modelo,
-        serie: b.serie,
-        medidas: b.medidas,
-        color: b.color,
+        ...datosVisibles(b),
         estado: b.estado,
       },
       actual,
@@ -64,7 +61,7 @@ export function filasBienes(
       id: b.id,
       codigoPatrimonial: b.codigoPatrimonial,
       descripcion: b.descripcion,
-      detalle: `${b.marca} · ${b.modelo}`,
+      detalle: `${datosVisibles(b).marca} · ${datosVisibles(b).modelo}`,
       responsable: actual.responsable,
       ubicacion: actual.ubicacion,
       situacion: actual.situacion,
@@ -145,11 +142,11 @@ export function filasFicha(
     item: i + 1,
     codigoPatrimonial: bien.codigoPatrimonial,
     denominacion: bien.descripcion,
-    marca: bien.marca,
-    modelo: bien.modelo,
-    serie: bien.serie,
-    medida: bien.medidas,
-    color: bien.color,
+    marca: datosVisibles(bien).marca,
+    modelo: datosVisibles(bien).modelo,
+    serie: datosVisibles(bien).serie,
+    medida: datosVisibles(bien).medidas,
+    color: datosVisibles(bien).color,
     estado: bien.estado,
     aCargoDesde: estado.aCargoDesde ? dmy(estado.aCargoDesde) : null,
     custodiaDe: nombreDe(personas, estado.custodiaDeId),
@@ -265,11 +262,11 @@ export function datosActa(
         item: i + 1,
         codigoPatrimonial: bien.codigoPatrimonial,
         denominacion: bien.descripcion,
-        marca: bien.marca,
-        modelo: bien.modelo,
-        serie: bien.serie,
-        medida: bien.medidas,
-        color: bien.color,
+        marca: datosVisibles(bien).marca,
+        modelo: datosVisibles(bien).modelo,
+        serie: datosVisibles(bien).serie,
+        medida: datosVisibles(bien).medidas,
+        color: datosVisibles(bien).color,
         estado: bien.estado,
         custodiaDe: nombre(custodiaDeId),
       };
