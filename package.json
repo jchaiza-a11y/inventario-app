@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:aplicar": "node --env-file=.env.local db/aplicar.mjs",
+    "db:probar": "node --env-file=.env.local db/probar.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -14,6 +16,7 @@
     "cn": "^0.5.0",
     "lucide-react": "^1.64.0",
     "next": "16.4.3",
+    "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "shadcn": "^4.23.0",
